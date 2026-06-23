@@ -257,8 +257,8 @@ Détails complets : [`TESTING.md`](./quality-assurance/TESTING.md)
 | [`SECURITY.md`](./quality-assurance/SECURITY.md) | Mesures de sécurité, authentification, chiffrement |
 | [`PERFORMANCES.md`](./quality-assurance/PERFORMANCES.md) | Résultats des tests de charge k6 |
 | [`MAINTENANCE.md`](./quality-assurance/MAINTENANCE.md) | Procédures de mise à jour et maintenance |
-| [`openapi.yaml`](./backend/src/main/resources/static/api-docs/openapi.yaml) | Spécification OpenAPI de l'API REST |
-| [`index.html`](./backend/src/main/resources/static/openapi.html) | Documentation API interactive (Swagger UI) |
+| `openapi.yaml` | Spécification OpenAPI de l'API REST (disponible dans './backend/src/main/resources/static/api-docs')|
+| `index.html` | Documentation API interactive (Swagger UI) (disponible dans './backend/src/main/resources/static/api-docs')|
 
 ---
 
