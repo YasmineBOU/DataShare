@@ -1,0 +1,6 @@
+[submodule "frontend"]
+	path = frontend
+	url = git@github.com:YasmineBOU/DataShare_Frontend.git
+[submodule "backend"]
+	path = backend
+	url = git@github.com:YasmineBOU/DataShare_Backend.git
