@@ -278,26 +278,25 @@ datashare/
 │
 ├── DataShare_Backend/
 │   ├── src/main/java/com/openclassrooms/datashare/
-│   │   ├── configuration/security/   ← Spring Security, JWT, CORS
-│   │   ├── controller/               ← endpoints REST
-│   │   ├── dto/                      ← Data Transfer Objects
-│   │   └── entities/                 ← entités
-│   │   └── handler/                  ← Gestionnaire d'exception
-│   │   └── mapper/                   ← Mapper dto ↔ entité 
-│   │   ├── repository/               ← Spring Data JPA
-│   │   ├── scheduler/                ← Plannificateur de tâches (cronjob)
-│   │   ├── service/                  ← logique métier
-│   │   ├── utils/                    ← Utilitaires divers
-│   ├── src/test/                     ← tests unitaires + intégrations
+│   │   ├── configuration/security/           ← Spring Security, JWT, CORS
+│   │   ├── controller/                       ← endpoints REST
+│   │   ├── dto/                              ← Data Transfer Objects
+│   │   └── entities/                         ← entités
+│   │   └── handler/                          ← Gestionnaire d'exception
+│   │   └── mapper/                           ← Mapper dto ↔ entité 
+│   │   ├── repository/                       ← Spring Data JPA
+│   │   ├── scheduler/                        ← Plannificateur de tâches (cronjob)
+│   │   ├── service/                          ← logique métier
+│   │   ├── utils/                            ← Utilitaires divers
+│   ├── src/main/ressources/static/api-docs/  ← Documentation OpenAPI
+│   ├── src/test/                             ← tests unitaires + intégrations
 │   └── pom.xml
 │
 ├── performance-tests/
 │   └── datashare-load-tests.js          ← scénarios k6 en local
 │   └── cloud-datashare-load-tests.js    ← scénarios k6 dans un cloud
-│
-├── api-docs/
-│   ├── openapi.yaml
-│   └── index.html
+│   └── data/                            ← données de test
+│   └── k6-results/                      ← résultat des tests (json + html)
 │
 ├── quality-assurance/
 │   └── MAINTENANCE.md          ← Procédure de mises à jour et de maintenance 
