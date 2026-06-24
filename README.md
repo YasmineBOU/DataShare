@@ -5,7 +5,6 @@
 [![Angular](https://img.shields.io/badge/Angular-21.2.17-DD0031?logo=angular)](https://angular.dev)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-6DB33F?logo=springboot)](https://spring.io/projects/spring-boot)
 [![Java](https://img.shields.io/badge/Java-25-orange?logo=openjdk)](https://openjdk.org)
-[![License](https://img.shields.io/badge/license-private-lightgrey)]()
 
 ---
 
@@ -124,60 +123,68 @@ Un compte [Backblaze B2](https://www.backblaze.com/b2/cloud-storage.html) avec u
 ### Cloner le dépôt
 
 ```bash
-git clone <url-du-repo>
+# Cloner le repository git (avec les submodules 'backend' et 'frontend')
+git clone  --recurse-submodules git@github.com:YasmineBOU/DataShare.git
+# Ou
+git clone  --recurse-submodules https://github.com/YasmineBOU/DataShare.git
+
+# Aller dans le dossier du projet
 cd datashare
 ```
 
 ### Frontend
 
 ```bash
-cd DataShare_Frontend
+cd frontend
 npm install
+# S'assurer d'avoir 'OpenSSL' ou 'mkcert' d'installés
 ```
 
 ### Backend
 
 ```bash
-cd DataShare_Backend
+cd backend
 ./mvnw install -DskipTests
 ```
 
 ---
 
 ## Configuration
+Modifier le fichier `backend/src/main/resources/.env_example` pour qu'il soit conforme à votre configuration
 
-Créer `DataShare_Backend/src/main/resources/application.yml`:
+Y renseigner notamment les informations relatives à la DataBase, JWT, SSL et Backblaze B2 (S3):
+
+À la fin le renommer en `backend/src/main/resources/.env`
 
 ```properties
-# Base de données
-spring:
-  datasource:
-    username: <db_user>
-    password: <db_password>
-    url: jdbc:postgresql://<db_host>:<db_port>/<db_name>
+# .env file for DataShare application example
 
-# Backblaze B2
-b2:
-  endpoint: <endpoint>
-  region: <region>
-  bucket-name: <bucket_name>
-  key-id: <key_id>
-  application-key: <application_key>
+# Database configuration
+DB_USER=datashare_user
+DB_PASSWORD=datashare_password
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=datashare
 
-# JWT
-com:
-  openclassrooms:
-    datashare:
-      jwt:
-        secret-key: <secret_key>
-        expiration-ms: 86400000
+# JWT configuration
+JWT_SECRET_KEY=<jwt-secret-key>
+JWT_EXPIRATION_MS=86400000
 
-# SSL
-server:
-  port: 8443
-  ssl:
-    key-store: <path_vers_keystore>
-    key-store-password: <password>
+# HTTPS configuration
+SERVER_PORT=<server-port>
+SERVER_SSL_ENABLED=true
+SERVER_SSL_KEY_STORE=<path-to-keystore>
+SERVER_SSL_KEY_STORE_PASSWORD=<keystore-password>
+SERVER_SSL_KEY_STORE_TYPE=<keystore-type>
+SERVER_SSL_KEY_ALIAS=<key-alias>
+COOKIE_SECURE=true
+
+# Backblaze B2 Configuration
+B2_ENDPOINT=<b2-endpoint>
+B2_REGION=<b2-region>
+B2_BUCKET_NAME=<bucket-name>
+B2_KEY_ID=<key-id>
+B2_APPLICATION_KEY=<application-key>
 ```
 
 > **Important** — ce fichier contient des secrets et doit rester exclu de Git (`.gitignore`).
@@ -190,13 +197,13 @@ server:
 
 ```bash
 # Terminal 1 — Backend
-cd DataShare_Backend
+cd backend
 ./mvnw spring-boot:run
 ## Ou sur windows, se servir du script .bat
 .\java25.bat run
 
 # Terminal 2 — Frontend HTTPS
-cd DataShare_Frontend
+cd frontend
 npm run start:https
 ```
 
@@ -245,7 +252,7 @@ k6 run performance-tests/datashare-load-tests.js
 ### Adapter le script pour une pluralité de fichiers et de localisations users
 ```
 
-Détails complets : [`TESTING.md`](./quality-assurance/TESTING.md)
+Détails complets : [`TESTING.md`](./quality-assurance/TESTING.md) et [`PERF.md`](./quality-assurance/PERF.md)
 
 ---
 
@@ -262,11 +269,11 @@ Détails complets : [`TESTING.md`](./quality-assurance/TESTING.md)
 
 ---
 
-## Structure du projet
+## Structure globale du projet
 
 ```
 datashare/
-├── DataShare_Frontend/
+├── frontend/
 │   ├── src/app/
 │   │   ├── core/              ← services, modèles, config, utils
 │   │   ├── layouts/           ← PublicLayout
@@ -276,7 +283,7 @@ datashare/
 │   ├── cypress/               ← tests E2E + mocks
 │   └── package.json
 │
-├── DataShare_Backend/
+├── backend/
 │   ├── src/main/java/com/openclassrooms/datashare/
 │   │   ├── configuration/security/           ← Spring Security, JWT, CORS
 │   │   ├── controller/                       ← endpoints REST
