@@ -150,11 +150,9 @@ cd backend
 ---
 
 ## Configuration
-Modifier le fichier `backend/src/main/resources/.env_example` pour qu'il soit conforme à votre configuration
+Modifier le fichier `backend/src/main/resources/.env` pour qu'il soit conforme à votre configuration
 
-Y renseigner notamment les informations relatives à la DataBase, JWT, SSL et Backblaze B2 (S3):
-
-À la fin le renommer en `backend/src/main/resources/.env`
+Y renseigner notamment les informations relatives à la DataBase, JWT, SSL et Backblaze B2 (S3).
 
 ```properties
 # .env file for DataShare application example
@@ -192,6 +190,9 @@ B2_APPLICATION_KEY=<application-key>
 ---
 
 ## Lancement
+
+
+> Lancer Docker-Desktop sur votre poste de travail local
 
 ### Développement
 
@@ -262,7 +263,7 @@ Détails complets : [`TESTING.md`](./quality-assurance/TESTING.md) et [`PERF.md`
 |---|---|
 | [`TESTING.md`](./quality-assurance/TESTING.md) | Plan de tests, couverture de code |
 | [`SECURITY.md`](./quality-assurance/SECURITY.md) | Mesures de sécurité, authentification, chiffrement |
-| [`PERFORMANCES.md`](./quality-assurance/PERFORMANCES.md) | Résultats des tests de charge k6 |
+| [`PERFORMANCES.md`](./quality-assurance/PERF.md) | Résultats des tests de charge k6 |
 | [`MAINTENANCE.md`](./quality-assurance/MAINTENANCE.md) | Procédures de mise à jour et maintenance |
 | `openapi.yaml` | Spécification OpenAPI de l'API REST (disponible dans './backend/src/main/resources/static/api-docs')|
 | `index.html` | Documentation API interactive (Swagger UI) (disponible dans './backend/src/main/resources/static/api-docs')|
