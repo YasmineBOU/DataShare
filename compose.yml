@@ -1,0 +1,46 @@
+services:
+  postgres:
+    image: 'postgres:16-alpine'
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - '5432:5432'
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - datashare-network
+
+  backend:
+    build:
+      context: ./backend
+    image: ghcr.io/${GITHUB_REPOSITORY:-datashare}/backend:latest
+    depends_on:
+      - postgres
+    ports:
+      - '8080:8080'
+    env_file:
+      - .env
+    volumes:
+      - .env:/app/.env
+    networks:
+      - datashare-network
+
+  frontend:
+    build:
+      context: ./frontend
+    image: ghcr.io/${GITHUB_REPOSITORY:-datashare}/frontend:latest
+    depends_on:
+      - backend
+    ports:
+      - '80:80'
+    networks:
+      - datashare-network
+
+volumes:
+  db_data:
+
+networks:
+  datashare-network:
+    driver: bridge
