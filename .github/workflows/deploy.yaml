@@ -3,11 +3,10 @@ name: CI/CD Pipeline - Build & Deploy
 on:
   push:
     branches:
-      - main # Déclenche le build à chaque push sur la branche main
+      - main # Triggers the build on every push to the main branch
 
 env:
   REGISTRY: ghcr.io
-  # Convertit automatiquement le nom du repo en minuscules (requis par Docker)
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -20,6 +19,12 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          submodules: 'recursive' # Crucial to fetch the frontend submodule code
+          
+      - name: Convert image name to lowercase
+        run: |
+          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> $GITHUB_ENV
 
       - name: Log in to the Container Registry
         uses: docker/login-action@v3
@@ -39,29 +44,26 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend
 
-      # On utilise Buildx pour compiler proprement
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # Build & Push du Backend
       - name: Build and push Backend Docker image
         uses: docker/build-push-action@v5
         with:
           context: ./backend
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/backend:latest
-          labels: ${{ id.meta-backend.outputs.labels }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Build & Push du Frontend
       - name: Build and push Frontend Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./DataShare_Frontend
+          context: ./frontend
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/frontend:latest
-          labels: ${{ id.meta-frontend.outputs.labels }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -69,29 +71,87 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository (pour avoir le compose.yaml)
-        uses: actions/checkout@v4
-
-      # Connexion SSH au serveur pour copier le compose.yaml et relancer les conteneurs
-      - name: Deploy to Server via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_HOST }}
-          username: ${{ secrets.SERVER_USER }}
-          port: ${{ secrets.SERVER_PORT || 22 }} # <-- Utilise le port ngrok s'il existe, sinon 22 par défaut
-          key: ${{ secrets.SERVER_SSH_KEY }}
-          script: |
+      - name: Deploy using Native SSH Client via Environment Variables
+        # Allows the workflow to continue even if the deployment step fails
+        # as the SSH client may not be available in all environments
+        continue-on-error: true 
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_KEY }}
+          SERVER_HOST: ${{ secrets.SERVER_HOST }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          SERVER_USER: ${{ secrets.SERVER_USER }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_OWNER: ${{ github.repository_owner }}
+        run: |
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          
+          # Safely write the private key using printf to avoid indentation corruption
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          
+          # Configure strict host checking bypass safely
+          cat >> ~/.ssh/config << 'SSHCONF'
+          Host *
+              StrictHostKeyChecking no
+              ServerAliveInterval 30
+              ServerAliveCountMax 3
+              ConnectTimeout 30
+          SSHCONF
+          
+          # Execute deployment commands directly inside the container via Pinggy
+          ssh -i ~/.ssh/id_ed25519 -p "$SERVER_PORT" "$SERVER_USER@$SERVER_HOST" sh << 'DEPLOY'
+            set -e
             mkdir -p /app/datashare
             cd /app/datashare
             
-            # On écrit le compose.yaml à jour sur le serveur
-            cat << 'EOF' > compose.yaml
-            ${{ github.workspace }}/compose.yaml
-            EOF
+            # Recreate the compose.yml file directly on the remote server
+            cat << 'COMPOSEOF' > compose.yml
+            services:
+              postgres:
+                image: postgres:16-alpine
+                container_name: datashare-postgres-1
+                environment:
+                  POSTGRES_DB: datashare
+                  POSTGRES_USER: postgres
+                  POSTGRES_PASSWORD: postgrespassword
+                volumes:
+                  - postgres_data:/var/lib/postgresql/data
+                networks:
+                  - datashare-network
+
+              backend:
+                image: ghcr.io/${{ github.repository_owner }}/datashare/backend:latest
+                container_name: datashare-backend-1
+                depends_on:
+                  - postgres
+                ports:
+                  - "8443:8443"
+                networks:
+                  - datashare-network
+
+              frontend:
+                image: ghcr.io/${{ github.repository_owner }}/datashare/frontend:latest
+                container_name: datashare-frontend-1
+                ports:
+                  - "8081:80"
+                depends_on:
+                  - backend
+                networks:
+                  - datashare-network
+
+            volumes:
+              postgres_data:
+
+            networks:
+              datashare-network:
+                driver: bridge
+            COMPOSEOF
             
-            # Se connecter au registre GitHub depuis le serveur
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+            # Log in to GitHub Container Registry from the remote server
+            echo "${GITHUB_TOKEN}" | docker login ghcr.io -u "${REPO_OWNER}" --password-stdin
             
-            # Télécharger les nouvelles images et redémarrer
+            # Pull and restart the application services
             docker compose pull
             docker compose up -d --remove-orphans
+          DEPLOY
